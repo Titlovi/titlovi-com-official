@@ -7,4 +7,7 @@
     <category label="32016">
         <setting label="32012" type="enum" id="titlovi-lat-cyr-conversion" lvalues="32013|32014|32015"/>
     </category>
+    <category label="32018">
+    <setting label="32019" type="bool" id="clear-tmp-files" default="false"/>
+</category>
 </settings>

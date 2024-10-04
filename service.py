@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 from urllib.parse import parse_qs
 from urllib.parse import quote_plus
 from zipfile import ZipFile
+import shutil
 
 addon = xbmcaddon.Addon()
 video_info = xbmc.InfoTagVideo()
@@ -92,9 +93,8 @@ LAT_TO_CYR = {
 }
 
 
-def logger(message):
-    xbmc.log("{0} - {1}".format(script_name, message))
-
+def logger(message, level=xbmc.LOGINFO):
+    xbmc.log("{0} - {1}".format(script_name, message), level)
 
 def show_notification(message):
     xbmcgui.Dialog().notification(message)
@@ -196,6 +196,64 @@ def replace_lat_cyr_letters(text, convert_option, encoding):
             _text = _text.replace(cyr_letter, lat_letter)
     return _text
 
+def get_directory_size(directory):
+    """
+    Calculates the total size of all files in a directory and its subdirectories.
+    Args:
+        directory (str): Path to the directory.
+    Returns:
+        int: Total size of all files in bytes.
+    """
+    total_size = 0
+    # Walk through all directories and files in the given directory
+    for dirpath, dirnames, filenames in os.walk(directory):
+        for filename in filenames:
+            # Get the file path
+            file_path = os.path.join(dirpath, filename)
+            try:
+                # Add file size to the total size
+                total_size += os.path.getsize(file_path)
+            except FileNotFoundError:
+                # If file not found (e.g., removed during the process), skip it
+                pass
+            except PermissionError:
+                # In case of permission issues, skip the file
+                pass
+    return total_size
+
+def clear_temp_folder():
+    total_size = 0
+    deleted_items_count = 0
+    try:
+        # Check if the directory exists using xbmcvfs
+        if xbmcvfs.exists(temp_dir):
+            dir_list = xbmcvfs.listdir(temp_dir)  # List files and directories
+            # Delete all files in the folder
+            for filename in dir_list[1]:  # dir_list[1] gives files
+                file_path = xbmcvfs.translatePath(os.path.join(temp_dir, filename))
+                try:
+                    file_size = xbmcvfs.Stat(file_path).st_size()  # Get file size
+                    xbmcvfs.delete(file_path)  # Delete the file
+                    total_size += file_size
+                    deleted_items_count += 1
+                except Exception as e:
+                    logger("Failed to delete file {0}: {1}".format(file_path, e))
+            # Delete all directories if they are empty
+            for dirname in dir_list[0]:  # dir_list[0] gives directories
+                dir_path = xbmcvfs.translatePath(os.path.join(temp_dir, dirname))
+                try:
+                    total_size += get_directory_size(dir_path)
+                    shutil.rmtree(dir_path)
+                    deleted_items_count += 1
+                except Exception as e:
+                    logger("Failed to delete directory {0}: {1}".format(dir_path, e))
+    except Exception as e:
+        logger("Error during cleanup: {0}".format(e))
+    # Convert total size from bytes to kilobytes and formats the output with commas
+    total_size_kb = total_size / 1024
+    # Log the total size of deleted files and the number of deleted items
+    logger("Total size of deleted files: {:,.0f} KB".format(total_size_kb))
+    logger("Total number of deleted items: {0}".format(deleted_items_count))
 
 class ActionHandler(object):
     def __init__(self, params):
@@ -527,6 +585,12 @@ class ActionHandler(object):
         Method used for downloading subtitle zip file and extracting it.
         If subtitle file is already downloaded it is reused.
         """
+        try:
+            clear_tmp_files = addon.getSettingBool('clear-tmp-files') # Retrieves True/False
+        except Exception as e:
+            logger(e)
+        if clear_tmp_files:
+            clear_temp_folder()
         subtile_folder_name = 'titlovi_com_subtitle_{0}_{1}'.format(self.params['media_id'][0], self.params['type'][0])
         subtitle_folder_path = os.path.join(temp_dir, subtile_folder_name)
         subtitle_files = [(root, subtitle) for root, dirs, files in os.walk(subtitle_folder_path) for subtitle in files]

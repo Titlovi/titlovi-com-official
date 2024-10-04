@@ -81,3 +81,11 @@ msgstr ""
 msgctxt "#32017"
 msgid "Latin/Cyrillic conversion error, showing original subtitle"
 msgstr ""
+
+msgctxt "#32018"
+msgid "Clear tmp"
+msgstr ""
+
+msgctxt "#32019"
+msgid "Clear the tmp folder"
+msgstr ""

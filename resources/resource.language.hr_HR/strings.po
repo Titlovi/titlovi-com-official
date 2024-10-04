@@ -81,3 +81,11 @@ msgstr "Pretvorba podnaslova"
 msgctxt "#32017"
 msgid "Latin/Cyrillic conversion error, showing original subtitle"
 msgstr "Greška kod konverzije Latinica/Ćirilica, prikazuju se orginalni podnaslovi"
+
+msgctxt "#32018"
+msgid "Clear tmp"
+msgstr "Očisti tmp"
+
+msgctxt "#32019"
+msgid "Clear the tmp folder"
+msgstr "Isprazni tmp folder"

@@ -45,6 +45,9 @@ if not xbmcvfs.exists(temp_dir):
 
 addon_cache = simplecache.SimpleCache()
 
+location = xbmcvfs.translatePath("special://profile/addon_data/script.module.simplecache/")
+file_cache = xbmcvfs.translatePath(os.path.join(location, "simplecache.db"))
+
 DONT_CONVERT_LETTERS = 0
 CONVERT_LAT_TO_CYR = 1
 CONVERT_CYR_TO_LAT = 2
@@ -98,7 +101,7 @@ def logger(message, level=xbmc.LOGINFO):
 
 def show_notification(message):
     xbmcgui.Dialog().notification(message)
-
+    
 def normalize_string(_string):
     logger('normalize_string called with %s' % _string)
     result = unicodedata.normalize('NFKD', _string).encode('ascii', 'ignore')
@@ -108,13 +111,13 @@ def parse_season_episode(_string):
     """
     Function used for parsing season and episode numbers from string.
     If season and episode are found they are stripped from original string.
-    Allowed format is 'S01E01'. Allowed number range is 00-99.
+    Allowed formats: 'S01E01' and 'S1E1'. Allowed number range: 0-99.
     Returns three-tuple.
     """
     logger('parse_season_episode called with %s' % _string)
     if not _string:
         return _string, None, None
-    results = re.findall('[sS](\d{2})[eE](\d{2})', _string)
+    results = re.findall('[sS](\d{1,2})[eE](\d{1,2})', _string)
     if not results:
         return _string, None, None
     try:
@@ -238,7 +241,7 @@ def clear_temp_folder():
                     deleted_items_count += 1
                 except Exception as e:
                     logger("Failed to delete file {0}: {1}".format(file_path, e))
-            # Delete all directories if they are empty
+            # Delete all directories
             for dirname in dir_list[0]:  # dir_list[0] gives directories
                 dir_path = xbmcvfs.translatePath(os.path.join(temp_dir, dirname))
                 try:
@@ -390,7 +393,7 @@ class ActionHandler(object):
         else:
             logger('Invalid action')
             show_notification(get_string(2103))
-
+            
     def handle_search_action(self):
         """
         Method used for searching
